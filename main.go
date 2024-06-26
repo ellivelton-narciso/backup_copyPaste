@@ -72,8 +72,30 @@ func copyDir(origemDir, dstDir string, wg *sync.WaitGroup, sem chan struct{}) {
 }
 
 func main() {
-	oriDir := `./teste`
-	dstDir := `./teste2`
+	var (
+		oriDir string
+		dstDir string
+	)
+
+	for {
+		fmt.Print("Digite o diretório de origem: ")
+		fmt.Scanln(&oriDir)
+		if _, err := os.Stat(oriDir); os.IsNotExist(err) {
+			fmt.Println("Diretório de origem não existe.")
+		} else {
+			break
+		}
+	} // oriDir
+
+	for {
+		fmt.Print("Digite o diretório de destino: ")
+		fmt.Scanln(&dstDir)
+		if _, err := os.Stat(dstDir); os.IsNotExist(err) {
+			fmt.Println("Diretório de destino não existe.")
+		} else {
+			break
+		}
+	} // dstDir
 
 	logF, err := os.OpenFile("backup_log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
