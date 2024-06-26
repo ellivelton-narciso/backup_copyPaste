@@ -7,14 +7,38 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
+	"time"
 )
+
+var goRoutines int
+
+const maxMemory = (4 * 1000) << 20
+const debugMode = true
 
 func copyFile(ori, dst string, wg *sync.WaitGroup, controlador chan struct{}) {
 	defer wg.Done()
 	controlador <- struct{}{}
+	defer func() { <-controlador }()
 
+	for {
+		var m runtime.MemStats
+		runtime.ReadMemStats(&m)
+		if m.Alloc < maxMemory {
+			break
+		}
+		if debugMode {
+			fmt.Println("[DEBUG] Memória usada acima do limite, esperando...")
+		}
+		time.Sleep(5 * time.Second)
+	}
+
+	log.Printf("Copiando arquivo: %s para %s\n", ori, dst)
+	if debugMode {
+		fmt.Println("[DEBUG] Número atual de Goroutines: ", runtime.NumGoroutine())
+	}
 	origem, err := os.Open(ori)
 	if err != nil {
 		log.Printf("Erro ao abrir o arquivo de origem %s: %v\n", ori, err)
@@ -44,6 +68,8 @@ func copyFile(ori, dst string, wg *sync.WaitGroup, controlador chan struct{}) {
 func copyDir(origemDir, dstDir string, wg *sync.WaitGroup, sem chan struct{}) {
 	defer wg.Done()
 
+	log.Printf("Copiando diretório: %s para %s\n", origemDir, dstDir)
+
 	entries, err := ioutil.ReadDir(origemDir)
 	if err != nil {
 		log.Printf("Erro ao ler o diretório de origem %s: %v\n", origemDir, err)
@@ -60,9 +86,16 @@ func copyDir(origemDir, dstDir string, wg *sync.WaitGroup, sem chan struct{}) {
 		origemPath := filepath.Join(origemDir, entry.Name())
 		dstPath := filepath.Join(dstDir, entry.Name())
 
+		for runtime.NumGoroutine() > goRoutines {
+			if debugMode {
+				fmt.Println("[DEBUG] Numero máximo de goroutines atingido, aguardando liberar.... ", runtime.NumGoroutine(), " goroutines")
+			}
+			time.Sleep(1 * time.Second)
+		}
+
 		if entry.IsDir() {
 			wg.Add(1)
-			go copyDir(origemPath, dstPath, wg, sem)
+			copyDir(origemPath, dstPath, wg, sem)
 		} else {
 			wg.Add(1)
 			go copyFile(origemPath, dstPath, wg, sem)
@@ -77,7 +110,6 @@ func main() {
 		resp        string
 		logName     string
 		generateLog bool
-		goRoutines  int
 	)
 
 	for {
