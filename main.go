@@ -10,8 +10,6 @@ import (
 	"sync"
 )
 
-const maxGoroutines = 20
-
 func copyFile(ori, dst string, wg *sync.WaitGroup, controlador chan struct{}) {
 	defer wg.Done()
 	controlador <- struct{}{}
@@ -73,8 +71,10 @@ func copyDir(origemDir, dstDir string, wg *sync.WaitGroup, sem chan struct{}) {
 
 func main() {
 	var (
-		oriDir string
-		dstDir string
+		oriDir      string
+		dstDir      string
+		generateLog bool
+		goRoutines  int
 	)
 
 	for {
@@ -97,15 +97,57 @@ func main() {
 		}
 	} // dstDir
 
-	logF, err := os.OpenFile("backup_log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		fmt.Printf("Erro ao criar arquivo de log: %v\n", err)
-		return
-	}
-	defer logF.Close()
-	log.SetOutput(logF)
+	for {
+		fmt.Print("Deseja gerar um arquivo de log? (s/n): ")
+		var resp string
+		fmt.Scanln(&resp)
+		if resp == "s" {
+			generateLog = true
+			break
+		} else if resp == "n" {
+			generateLog = false
+			break
+		} else {
+			fmt.Println("Resposta inválida.")
+		}
+	} // generateLog
 
-	controlador := make(chan struct{}, maxGoroutines)
+	// if generateLog {
+	// 	logF, err := os.OpenFile("backup_log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	// 	if err != nil {
+	// 		fmt.Printf("Erro ao criar arquivo de log: %v\n", err)
+	// 		return
+	// 	}
+	// 	defer logF.Close()
+	// 	log.SetOutput(logF)
+	// }
+
+	if generateLog {
+		for {
+			fmt.Print("Digite o nome do arquivo de log: ")
+			var logName string
+			fmt.Scanln(&logName)
+			fileLog, err := os.OpenFile(logName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			if err != nil {
+				fmt.Printf("Erro ao criar arquivo de log: %v\n", err)
+			} else {
+				log.SetOutput(fileLog)
+				break
+			}
+		}
+	}
+
+	for {
+		fmt.Print("Digite o número de goroutines: ")
+		fmt.Scanln(&goRoutines)
+		if goRoutines <= 0 {
+			fmt.Println("Número de goroutines inválido.")
+		} else {
+			break
+		}
+	} // goRoutines
+
+	controlador := make(chan struct{}, goRoutines)
 	var wg sync.WaitGroup
 
 	wg.Add(1)
