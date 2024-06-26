@@ -122,15 +122,20 @@ func main() {
 	if generateLog {
 		for {
 			fmt.Print("Digite o nome do arquivo de log: ")
-			fmt.Scanln(&logName)
-			fileLog, err := os.OpenFile(logName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			_, err := fmt.Scanln(&logName)
 			if err != nil {
-				fmt.Printf("Erro ao criar arquivo de log: %v\n", err)
-			} else {
-				log.SetOutput(fileLog)
-				break
+				fmt.Println("Nome do arquivo inválido.")
+				continue
 			}
+			break
 		} // logName
+		fileLog, err := os.OpenFile(logName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			fmt.Printf("Erro ao criar arquivo de log: %v\n", err)
+		} else {
+			defer fileLog.Close()
+			log.SetOutput(fileLog)
+		}
 	}
 
 	for {
