@@ -17,7 +17,7 @@ Este projeto é uma aplicação em Go projetada para copiar recursivamente o con
    
 2. Navegue até o diretório do projeto:
    ```bash
-      cd backup-directory
+      cd backup_copyPaste
    ```
    
 3. Compile o projeto:
