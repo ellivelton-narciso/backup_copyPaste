@@ -12,7 +12,7 @@ Este projeto é uma aplicação em Go projetada para copiar recursivamente o con
 1. Clone o repositório:
 
    ```bash
-   git clone https://github.com/seuusuario/backup-directory.git
+   git clone https://github.com/ellivelton-narciso/backup_copyPaste
    ```
    
 2. Navegue até o diretório do projeto:
@@ -31,9 +31,8 @@ Este projeto é uma aplicação em Go projetada para copiar recursivamente o con
    ```bash
       ./copyPaste
    ```
-Por padrão, a aplicação tentará copiar o conteúdo do diretório `./teste` para o diretório `./teste2`.
+Será questionado a origem e o destino do backup ao inciar a aplicação. 
 
 1. Configuração:
-   * **Quantidade de Goroutines:** Ajuste o número máximo de goroutines editando a constante maxGoroutines no arquivo main.go.
-   * **Diretório de Origem e Destino:** Modifique os diretórios de origem (oriDir) e destino (dstDir) editando as variáveis na função main do arquivo main.go.
+   * **Quantidade de Goroutines:** Ajuste o número máximo de goroutines tomando cuidado com as limitações do seu computador.
    
