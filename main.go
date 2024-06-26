@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
@@ -100,27 +101,18 @@ func main() {
 	for {
 		fmt.Print("Deseja gerar um arquivo de log? (s/n): ")
 		var resp string
+		resp = strings.ToUpper(resp)
 		fmt.Scanln(&resp)
-		if resp == "s" {
+		if resp == "S" {
 			generateLog = true
 			break
-		} else if resp == "n" {
+		} else if resp == "N" {
 			generateLog = false
 			break
 		} else {
 			fmt.Println("Resposta inválida.")
 		}
 	} // generateLog
-
-	// if generateLog {
-	// 	logF, err := os.OpenFile("backup_log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	// 	if err != nil {
-	// 		fmt.Printf("Erro ao criar arquivo de log: %v\n", err)
-	// 		return
-	// 	}
-	// 	defer logF.Close()
-	// 	log.SetOutput(logF)
-	// }
 
 	if generateLog {
 		for {
