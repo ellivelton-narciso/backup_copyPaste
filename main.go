@@ -74,6 +74,8 @@ func main() {
 	var (
 		oriDir      string
 		dstDir      string
+		resp        string
+		logName     string
 		generateLog bool
 		goRoutines  int
 	)
@@ -100,9 +102,12 @@ func main() {
 
 	for {
 		fmt.Print("Deseja gerar um arquivo de log? (s/n): ")
-		var resp string
+		_, err := fmt.Scanln(&resp)
+		if err != nil {
+			fmt.Println("Digite somente letras aqui.")
+			return
+		}
 		resp = strings.ToUpper(resp)
-		fmt.Scanln(&resp)
 		if resp == "S" {
 			generateLog = true
 			break
@@ -117,7 +122,6 @@ func main() {
 	if generateLog {
 		for {
 			fmt.Print("Digite o nome do arquivo de log: ")
-			var logName string
 			fmt.Scanln(&logName)
 			fileLog, err := os.OpenFile(logName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 			if err != nil {
@@ -126,14 +130,18 @@ func main() {
 				log.SetOutput(fileLog)
 				break
 			}
-		}
+		} // logName
 	}
 
 	for {
-		fmt.Print("Digite o número de goroutines: ")
-		fmt.Scanln(&goRoutines)
+		fmt.Print("Quantidade de arquivos que serão copiados simultaneamente: ")
+		_, err := fmt.Scanln(&goRoutines)
+		if err != nil {
+			fmt.Println("Digite somente números.")
+			continue
+		}
 		if goRoutines <= 0 {
-			fmt.Println("Número de goroutines inválido.")
+			fmt.Println("Quantidade inválida.")
 		} else {
 			break
 		}
