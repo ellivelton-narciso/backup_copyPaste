@@ -13,10 +13,11 @@ import (
 	"time"
 )
 
-var goRoutines int
-
-const maxMemory = (4 * 1000) << 20
-const debugMode = true
+var (
+	goRoutines        = 20
+	maxMemory  uint64 = 1000 >> 20 // 1GB default
+	debugMode         = false
+)
 
 func copyFile(ori, dst string, wg *sync.WaitGroup, controlador chan struct{}) {
 	defer wg.Done()
@@ -32,7 +33,7 @@ func copyFile(ori, dst string, wg *sync.WaitGroup, controlador chan struct{}) {
 		if debugMode {
 			fmt.Println("[DEBUG] Memória usada acima do limite, esperando...")
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 
 	log.Printf("Copiando arquivo: %s para %s\n", ori, dst)
@@ -61,8 +62,6 @@ func copyFile(ori, dst string, wg *sync.WaitGroup, controlador chan struct{}) {
 	} else {
 		log.Printf("Arquivo copiado com sucesso: %s para %s\n", ori, dst)
 	}
-
-	<-controlador
 }
 
 func copyDir(origemDir, dstDir string, wg *sync.WaitGroup, sem chan struct{}) {
@@ -90,7 +89,6 @@ func copyDir(origemDir, dstDir string, wg *sync.WaitGroup, sem chan struct{}) {
 			if debugMode {
 				fmt.Println("[DEBUG] Numero máximo de goroutines atingido, aguardando liberar.... ", runtime.NumGoroutine(), " goroutines")
 			}
-			time.Sleep(1 * time.Second)
 		}
 
 		if entry.IsDir() {
@@ -121,7 +119,6 @@ func main() {
 			break
 		}
 	} // oriDir
-
 	for {
 		fmt.Print("Digite o diretório de destino: ")
 		fmt.Scanln(&dstDir)
@@ -131,7 +128,6 @@ func main() {
 			break
 		}
 	} // dstDir
-
 	for {
 		fmt.Print("Deseja gerar um arquivo de log? (s/n): ")
 		_, err := fmt.Scanln(&resp)
@@ -150,7 +146,6 @@ func main() {
 			fmt.Println("Resposta inválida.")
 		}
 	} // generateLog
-
 	if generateLog {
 		for {
 			fmt.Print("Digite o nome do arquivo de log: ")
@@ -169,7 +164,6 @@ func main() {
 			log.SetOutput(fileLog)
 		}
 	}
-
 	for {
 		fmt.Print("Quantidade de arquivos que serão copiados simultaneamente: ")
 		_, err := fmt.Scanln(&goRoutines)
@@ -183,6 +177,39 @@ func main() {
 			break
 		}
 	} // goRoutines
+	for {
+		fmt.Print("Quantidade de memória RAM máxima que poderá ser utilizada (GB): ")
+		_, err := fmt.Scanln(&maxMemory)
+		if err != nil {
+			fmt.Println("Digite somente números.")
+			continue
+		}
+		if maxMemory <= 1 {
+			fmt.Println("Quantidade inválida.")
+		} else {
+			maxMemory = (maxMemory * 1000) << 20
+			break
+		}
+	}
+	for {
+		var debugString string
+		fmt.Print("Debug Mode?:(s/n) ")
+		_, err := fmt.Scanln(&debugString)
+		if err != nil {
+			fmt.Println("Digite somente letras.")
+			continue
+		}
+		debugString = strings.ToUpper(debugString)
+		if debugString == "S" {
+			debugMode = true
+			break
+		} else if debugString == "N" {
+			debugMode = false
+			break
+		} else {
+			fmt.Println("Resposta inválida.")
+		}
+	}
 
 	controlador := make(chan struct{}, goRoutines)
 	var wg sync.WaitGroup
