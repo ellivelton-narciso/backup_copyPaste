@@ -190,7 +190,7 @@ func main() {
 			maxMemory = (maxMemory * 1000) << 20
 			break
 		}
-	}
+	} // mem ram limitação
 	for {
 		var debugString string
 		fmt.Print("Debug Mode?:(s/n) ")
@@ -209,7 +209,7 @@ func main() {
 		} else {
 			fmt.Println("Resposta inválida.")
 		}
-	}
+	} // debug mode
 
 	controlador := make(chan struct{}, goRoutines)
 	var wg sync.WaitGroup
