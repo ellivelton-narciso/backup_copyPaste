@@ -17,8 +17,20 @@ var (
 	goRoutines        = 20
 	maxMemory  uint64 = 1000 >> 20 // 1GB default
 	debugMode         = false
-	overwrite         = true
+	overwrite  bool
 )
+
+func filesEqual(file1, file2 string) (bool, error) {
+	info1, err := os.Stat(file1)
+	if err != nil {
+		return false, err
+	}
+	info2, err := os.Stat(file2)
+	if err != nil {
+		return false, err
+	}
+	return info1.ModTime() == info2.ModTime(), nil
+}
 
 func copyFile(ori, dst string, wg *sync.WaitGroup, controlador chan struct{}) {
 	defer wg.Done()
@@ -27,8 +39,15 @@ func copyFile(ori, dst string, wg *sync.WaitGroup, controlador chan struct{}) {
 
 	if !overwrite {
 		if _, err := os.Stat(dst); err == nil {
-			log.Printf("Arquivo de destino já existe, não será copiado: %s\n", dst)
-			return
+			equal, err := filesEqual(ori, dst)
+			if err != nil {
+				log.Printf("Erro ao comparar arquivo %s, %v\n", ori, err)
+				return
+			}
+			if equal {
+				log.Printf("Arquivo de destino já existe, não será copiado: %s\n", dst)
+				return
+			}
 		}
 	}
 
@@ -69,6 +88,15 @@ func copyFile(ori, dst string, wg *sync.WaitGroup, controlador chan struct{}) {
 		log.Printf("Erro ao copiar o arquivo de %s para %s: %v\n", ori, dst, err)
 	} else {
 		log.Printf("Arquivo copiado com sucesso: %s para %s\n", ori, dst)
+
+		origInfo, err := origem.Stat()
+		if err == nil {
+			err := os.Chtimes(dst, origInfo.ModTime(), origInfo.ModTime())
+			if err != nil {
+				log.Printf("Erro ao copiar data de modificação do arquivo de origem pro arquivo destino: %s , %v\n", ori, err)
+				return
+			}
+		}
 	}
 }
 
