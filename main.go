@@ -17,12 +17,20 @@ var (
 	goRoutines        = 20
 	maxMemory  uint64 = 1000 >> 20 // 1GB default
 	debugMode         = false
+	overwrite         = true
 )
 
 func copyFile(ori, dst string, wg *sync.WaitGroup, controlador chan struct{}) {
 	defer wg.Done()
 	controlador <- struct{}{}
 	defer func() { <-controlador }()
+
+	if !overwrite {
+		if _, err := os.Stat(dst); err == nil {
+			log.Printf("Arquivo de destino já existe, não será copiado: %s\n", dst)
+			return
+		}
+	}
 
 	for {
 		var m runtime.MemStats
@@ -192,8 +200,27 @@ func main() {
 		}
 	} // mem ram limitação
 	for {
+		var overwriteString string
+		fmt.Print("Substituir arquivos existentes? Se 'não' for escolhido irá ignorar arquivos já existentes. (s/n) ")
+		_, err := fmt.Scanln(&overwriteString)
+		if err != nil {
+			fmt.Println("Digite somente letras.")
+			continue
+		}
+		overwriteString = strings.ToUpper(overwriteString)
+		if overwriteString == "S" {
+			overwrite = true
+			break
+		} else if overwriteString == "N" {
+			overwrite = false
+			break
+		} else {
+			fmt.Println("Resposta inválida.")
+		}
+	} // Susbtituir
+	for {
 		var debugString string
-		fmt.Print("Debug Mode?:(s/n) ")
+		fmt.Print("Debug Mode? (s/n) ")
 		_, err := fmt.Scanln(&debugString)
 		if err != nil {
 			fmt.Println("Digite somente letras.")
