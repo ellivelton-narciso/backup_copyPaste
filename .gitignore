@@ -1,5 +1,4 @@
 *.txt
 *.iml
 .idea/
-teste/
-teste2/
+teste*/

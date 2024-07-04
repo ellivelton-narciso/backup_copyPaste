@@ -18,6 +18,7 @@ var (
 	maxMemory  uint64 = 1000 >> 20 // 1GB default
 	debugMode         = false
 	overwrite  bool
+	oriDirs    []string
 )
 
 func filesEqual(file1, file2 string) (bool, error) {
@@ -139,20 +140,38 @@ func copyDir(origemDir, dstDir string, wg *sync.WaitGroup, sem chan struct{}) {
 
 func main() {
 	var (
-		oriDir      string
-		dstDir      string
-		resp        string
-		logName     string
-		generateLog bool
+		oriDir       string
+		dstDir       string
+		resp         string
+		logName      string
+		newdirString string
+		generateLog  bool
 	)
 
 	for {
+		if newdirString == "N" {
+			break
+		}
 		fmt.Print("Digite o diretório de origem: ")
 		fmt.Scanln(&oriDir)
 		if _, err := os.Stat(oriDir); os.IsNotExist(err) {
 			fmt.Println("Diretório de origem não existe.")
 		} else {
-			break
+			oriDirs = append(oriDirs, oriDir)
+			for {
+				fmt.Print("Vai adicionar outro diretório? (s/n) ")
+				fmt.Scanln(&newdirString)
+
+				newdirString = strings.ToUpper(newdirString)
+				if newdirString == "S" {
+					break
+				} else if newdirString == "N" {
+					fmt.Println("Lista de diretórios de origem:", oriDirs)
+					break
+				} else {
+					fmt.Println("Resposta inválida. Digite 's' para sim ou 'n' para não.")
+				}
+			}
 		}
 	} // oriDir
 	for {
@@ -269,8 +288,13 @@ func main() {
 	controlador := make(chan struct{}, goRoutines)
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-	go copyDir(oriDir, dstDir, &wg, controlador)
+	//TODO: Fazer um controle para que todas as goroutines trabalhem em cada item da lista por vez.
+
+	for _, dir := range oriDirs {
+		wg.Add(1)
+		dstSubDir := filepath.Join(dstDir, filepath.Base(dir))
+		go copyDir(dir, dstSubDir, &wg, controlador)
+	}
 
 	wg.Wait()
 	log.Println("Backup concluído.")
