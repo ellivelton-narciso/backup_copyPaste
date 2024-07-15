@@ -135,6 +135,14 @@ func copyDir(origemDir, dstDir string, wg *sync.WaitGroup, sem chan struct{}) {
 			go copyFile(origemPath, dstPath, wg, sem)
 		}
 	}
+
+	origInfo, err := os.Stat(origemDir)
+	if err == nil {
+		err = os.Chtimes(dstDir, origInfo.ModTime(), origInfo.ModTime())
+		if err != nil {
+			log.Printf("Erro ao copiar data de modificação do diretório de origem para o diretório destino: %s , %v\n", origemDir, err)
+		}
+	}
 }
 
 func main() {
